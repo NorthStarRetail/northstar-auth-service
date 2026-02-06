@@ -1,0 +1,96 @@
+server:
+  port: 8191
+  error:
+    whitelabel:
+      enabled: false
+
+auth:
+  msg: "Welcome to NorthStar Auth Service"
+  build-version: 1.0.0
+  base-url: ${BASE_URL:http://localhost:8181}
+  oauth:
+    clientId: ${CLIENT_ID:northstar}
+    clientSecret: ${CLIENT_SECRET:northstar@25}
+    redirectUri:
+      login: ${REDIRECT_URI:http://localhost:8181/login/oauth2/code/northstar}
+  jwt:
+    key:
+      id: northstar
+
+spring:
+  application:
+    name: northstar-auth-service
+  main:
+    allow-bean-definition-overriding: true
+  jpa:
+    hibernate.ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+  sql:
+    init:
+      schema-locations:
+        - classpath:oauth2-schema.sql
+      mode: always
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:northstar_auth_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:root}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 60000
+      maximum-pool-size: 5
+      initialization-fail-timeout: 0
+
+info:
+  app:
+    name: Auth MicroService
+    description: NorthStar Retail Authorization Server (User Service)
+    version: 1.0.0
+
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    env:
+      enabled: true
+
+logging:
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){blue} %clr(%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]){yellow} %clr(:){red} %clr(%m){faint}%n"
+  level:
+    com.northstar.northstar.auth.service: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${DISCOVERY_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+
+openapi:
+  service:
+    title: NorthStar Auth Service Docs
+    version: 1.0.0
+    url: ${OPENAPI_GATEWAY_URL:http://localhost:8181/api/auth}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true

@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: northstar-auth-service-configmap
+data:
+  active-profile: "default"
+  openapi-gateway-url: "http://northstar-gateway-service-svc:8181/api/auth"
+  base-url: "http://northstar-gateway-service-svc:8181"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: northstar-auth-service-secret
+data:
+  client-id: "bm9ydGhzdGFy"
+  client-secret: "bm9ydGhzdGFyQDI1"
+type: Opaque
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northstar-auth-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: northstar-auth-service-deployment
+  template:
+    metadata:
+      labels:
+        app: northstar-auth-service-deployment
+    spec:
+      containers:
+        - env:
+            - name: JAVA_OPTS
+              value: "-XX:TieredStopAtLevel=1 -noverify -Xms128m -Xmx512m -Xss4m -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1 -Djava.util.concurrent.ForkJoinPool.common.parallelism=1"
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  key: active-profile
+                  name: northstar-auth-service-configmap
+            - name: BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-auth-service-configmap
+                  key: base-url
+            - name: DISCOVERY_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-discovery-service-configmap
+                  key: discovery-server-url
+            - name: OPENAPI_GATEWAY_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-auth-service-configmap
+                  key: openapi-gateway-url
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: northstar-auth-service-secret
+                  key: client-id
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: northstar-auth-service-secret
+                  key: client-secret
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-auth-service-db-configmap
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-auth-service-db-configmap
+                  key: db-port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: northstar-auth-service-db-configmap
+                  key: db-name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: northstar-auth-service-db-secret
+                  key: db-user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: northstar-auth-service-db-secret
+                  key: db-pass
+          image: northstar-auth-service:latest
+          imagePullPolicy: IfNotPresent
+          name: northstar-auth-service
+          ports:
+            - containerPort: 8191
+              protocol: TCP
+          resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: northstar-auth-service-svc
+spec:
+  selector:
+    app: northstar-auth-service-deployment
+  ports:
+    - protocol: TCP
+      port: 8191
+      targetPort: 8191
+  type: ClusterIP
