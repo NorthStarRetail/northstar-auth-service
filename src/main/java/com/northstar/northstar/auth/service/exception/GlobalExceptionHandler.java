@@ -1,5 +1,6 @@
 package com.northstar.northstar.auth.service.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,6 +22,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotCreatedException.class)
     public ResponseEntity<String> handleUserNotCreatedException(UserNotCreatedException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = ex.getMessage() != null ? ex.getMessage() : "";
+        if (message.contains("username") || message.contains("unique constraint")) {
+            return new ResponseEntity<>("Username already exists", HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>("Duplicate or invalid data", HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)

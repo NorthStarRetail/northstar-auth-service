@@ -39,6 +39,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserRequest request) {
+        if (userRepository.findUserByUsername(request.getUsername()).isPresent()) {
+            throw new UserNotCreatedException("Username already exists: " + request.getUsername());
+        }
         RoleEntity roleEntity = roleRepository.findByName(request.getRole().getValue())
                 .orElseThrow(() -> new RoleNotFoundException("Role not found"));
         UserEntity entity = UserEntity.builder()

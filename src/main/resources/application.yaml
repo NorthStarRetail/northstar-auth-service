@@ -79,7 +79,7 @@ eureka:
     register-with-eureka: true
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
-    prefer-ip-address: true
+#    prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
 
 openapi:
